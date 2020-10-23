@@ -1,6 +1,7 @@
 import css from 'index.scss';
 import {Config} from './config';
 import ContextMenu from './context-menu';
+import SingleContextMenu from './single-context-menu';
 import Tooltip from './tooltip';
 import {select, selectAll, event} from 'd3-selection';
 import ProjectionUtility from './projection-utility';
@@ -54,7 +55,7 @@ export default class MeasureTool {
 
   _init() {
     this._containerDiv = this._map.getDiv().querySelector("div:first-child");
-
+    
     if (this._options.contextMenu) {
       this._contextMenu = new ContextMenu(this._containerDiv, { width: 160 });
       this._startElementNode = this._contextMenu.addItem("Measure distance", true, this.start, this);
@@ -331,6 +332,7 @@ export default class MeasureTool {
         .on('touchstart', function(d, i){ self._onOverCircle(d, i, this);})
         .on('touchleave', function(d){ self._onOutCircle(d, this);})
         .on('mousedown', () => this._hideTooltip())
+        .on('click', function(d, i){ self._openContextMenu(d, i, this) })
         .call(this._onDragCircle());
 
     // enter and seat the new data with same style.
@@ -346,9 +348,25 @@ export default class MeasureTool {
         .on('touchstart', function(d, i){ self._onOverCircle(d, i, this);})
         .on('touchleave', function(d){ self._onOutCircle(d, this);})
         .on('mousedown', () => this._hideTooltip())
-        .call(this._onDragCircle());
+        .on('click', function(d, i){ self._openContextMenu(d, i, this) })
+        //.call(this._onDragCircle());
 
     this._nodeCircles.selectAll(".removed-circle").remove();
+  }
+
+  _openContextMenu(d, i, target) {
+    let self = this;
+    let point = this._projection.fromLatLngToContainerPixel(new google.maps.LatLng(d[1], d[0]));
+    let singleContextMenu = new SingleContextMenu(this._containerDiv);
+    singleContextMenu.show(point, () => {
+      self._geometry.removeNode(i);
+      select(target).classed('removed-circle', true);
+      self._overlay.draw();
+    }, this);
+
+    this._map.addListener('click', () => {
+      singleContextMenu.hide();
+    });
   }
 
   _updateLine() {
@@ -523,9 +541,9 @@ export default class MeasureTool {
     circleDrag.on('end', function (d, i) {
       self._enableMapScroll();
       if (!isDragged) {
+        console.log(i);
         if (i > 0) {
-          self._geometry.removeNode(i);
-          select(this).classed('removed-circle', true);
+          self._openContextMenu(d, i, this);
         } else {
           self._geometry.addNode(d);
           self._dragged = true;
