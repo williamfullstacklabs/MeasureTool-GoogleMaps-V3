@@ -55,7 +55,9 @@ export default class MeasureTool {
 
   _init() {
     this._containerDiv = this._map.getDiv().querySelector("div:first-child");
-    
+
+    this._singleContextMenu = new SingleContextMenu(this._containerDiv);
+
     if (this._options.contextMenu) {
       this._contextMenu = new ContextMenu(this._containerDiv, { width: 160 });
       this._startElementNode = this._contextMenu.addItem("Measure distance", true, this.start, this);
@@ -308,14 +310,18 @@ export default class MeasureTool {
   }
 
   _checkClick(mouseEvent){
+    console.log("_checkClick");
     // Use circle radius 'r' as a flag to determine if it is a delete or add event.
-    if(!this._dragged && this._nodeCircles.selectAll('circle[r="6"]').size() == 0 &&
+    if(!this._clicked && !this._dragged && this._nodeCircles.selectAll('circle[r="6"]').size() == 0 &&
        !this._hoverCircle.select("circle").attr('cx')) {
-      const node = [mouseEvent.latLng.lng(), mouseEvent.latLng.lat()];
-      this._geometry.addNode(node);
-      this._overlay.draw();
+        this._singleContextMenu.hide();
+        const node = [mouseEvent.latLng.lng(), mouseEvent.latLng.lat()];
+        this._geometry.addNode(node);
+        this._overlay.draw();
     }
+    
     this._dragged = false;
+    this._clicked = false;
   }
 
   _updateCircles() {
@@ -332,7 +338,6 @@ export default class MeasureTool {
         .on('touchstart', function(d, i){ self._onOverCircle(d, i, this);})
         .on('touchleave', function(d){ self._onOutCircle(d, this);})
         .on('mousedown', () => this._hideTooltip())
-        .on('click', function(d, i){ self._openContextMenu(d, i, this) })
         .call(this._onDragCircle());
 
     // enter and seat the new data with same style.
@@ -348,25 +353,24 @@ export default class MeasureTool {
         .on('touchstart', function(d, i){ self._onOverCircle(d, i, this);})
         .on('touchleave', function(d){ self._onOutCircle(d, this);})
         .on('mousedown', () => this._hideTooltip())
-        .on('click', function(d, i){ self._openContextMenu(d, i, this) })
-        //.call(this._onDragCircle());
+        .call(this._onDragCircle());
 
     this._nodeCircles.selectAll(".removed-circle").remove();
   }
 
   _openContextMenu(d, i, target) {
+    console.log("_openContextMenu");
+    this._singleContextMenu.hide();
     let self = this;
+    this._clicked = true;
+
     let point = this._projection.fromLatLngToContainerPixel(new google.maps.LatLng(d[1], d[0]));
-    let singleContextMenu = new SingleContextMenu(this._containerDiv);
-    singleContextMenu.show(point, () => {
+    this._singleContextMenu.show(point, () => {
       self._geometry.removeNode(i);
       select(target).classed('removed-circle', true);
       self._overlay.draw();
+      self._clicked = false;
     }, this);
-
-    this._map.addListener('click', () => {
-      singleContextMenu.hide();
-    });
   }
 
   _updateLine() {
@@ -532,21 +536,24 @@ export default class MeasureTool {
         self._updateArea(i, self._projectionUtility.svgPointToLatLng([event.x, event.y]));
       });
 
-    circleDrag.on('start', function(d) {
+    circleDrag.on('start', function(d, i) {
+      console.log('start', i);
       event.sourceEvent.stopPropagation();
       select(this).raise().attr('r', 6);
       self._disableMapScroll();
     });
 
     circleDrag.on('end', function (d, i) {
+      console.log('end', i);
       self._enableMapScroll();
       if (!isDragged) {
-        console.log(i);
         if (i > 0) {
           self._openContextMenu(d, i, this);
         } else {
-          self._geometry.addNode(d);
-          self._dragged = true;
+          if(/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) === false){
+            self._geometry.addNode(d);
+            self._dragged = true;
+          }
         }
       } else {
         self._geometry.updateNode(
@@ -792,6 +799,8 @@ export default class MeasureTool {
     if (typeof this._events.get(EVENT_CHANGE) === "function") {
       this._events.get(EVENT_CHANGE)(this._lastMeasure = result);
     }
+
+    this._overlay.draw();
   }
 
   _updateSegment(d) {

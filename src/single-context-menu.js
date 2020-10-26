@@ -4,8 +4,12 @@ import css from 'single-context-menu.scss';
 export default class SingleContextMenu {
     constructor(parentContainer) {
         this._parentContainer = parentContainer;
+    }
+
+    create() {
         this._singleContextMenu = document.createElement("div");
         this._singleContextMenu.classList.add(`${Config.prefix}-single-context-menu`);
+        this._singleContextMenu.id = `${Config.prefix}-single-context-menu`;
         this._singleContextMenu.stylesheet = css;
         this._singleContextMenu.oncontextmenu = event => event.preventDefault();
 
@@ -13,6 +17,7 @@ export default class SingleContextMenu {
     }
 
     show(point, cb, context) {
+        this.create();
         let item = document.createElement("div");
         item.className = `${Config.prefix}-single-context-menu-item`;
         item.innerHTML = `
@@ -44,6 +49,12 @@ export default class SingleContextMenu {
     }
 
     hide() {
-        this._singleContextMenu.remove();
+        if (this._singleContextMenu) {
+            this._singleContextMenu.remove();
+            const cm = document.getElementById("measure-tool-single-context-menu");
+            if (cm) {
+                cm.remove();
+            }
+        }
     }
 }
