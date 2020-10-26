@@ -267,7 +267,7 @@ export default class MeasureTool {
     this._hoverCircle
       .append("circle")
       .attr('class', 'grey-circle')
-      .attr('r', 5);
+      .attr('r', 8);
 
     if (this._initComplete && !this._started) {
       this._overlay.setMap(null);
@@ -311,7 +311,7 @@ export default class MeasureTool {
 
   _checkClick(mouseEvent){
     // Use circle radius 'r' as a flag to determine if it is a delete or add event.
-    if(!this._clicked && !this._dragged && this._nodeCircles.selectAll('circle[r="6"]').size() == 0 &&
+    if(!this._clicked && !this._dragged && this._nodeCircles.selectAll('circle[r="9"]').size() == 0 &&
        !this._hoverCircle.select("circle").attr('cx')) {
         this._singleContextMenu.hide();
         const node = [mouseEvent.latLng.lng(), mouseEvent.latLng.lat()];
@@ -329,7 +329,7 @@ export default class MeasureTool {
     let circles = this._nodeCircles.selectAll("circle")
       .data(this._geometry ? this._geometry.nodes : [])
         .attr('class', (d, i) => i === 0 ? 'cover-circle head-circle' : 'cover-circle')
-        .attr('r', 5)
+        .attr('r', 8)
         .attr('cx', d => this._projectionUtility.latLngToSvgPoint(d)[0])
         .attr('cy', d => this._projectionUtility.latLngToSvgPoint(d)[1])
         .on('mouseover', function(d, i){ self._onOverCircle(d, i, this);})
@@ -344,7 +344,7 @@ export default class MeasureTool {
       .enter()
       .append('circle')
         .attr('class', 'cover-circle')
-        .attr('r', 5)
+        .attr('r', 8)
         .attr('cx', d => this._projectionUtility.latLngToSvgPoint(d)[0])
         .attr('cy', d => this._projectionUtility.latLngToSvgPoint(d)[1])
         .on('mouseover', function(d, i){ self._onOverCircle(d, i, this);})
@@ -499,7 +499,7 @@ export default class MeasureTool {
 
   _onOverCircle(d, i, target) {
     if (this._dragging) return;
-    select(target).attr('r', 6);
+    select(target).attr('r', 9);
     if (this._options.tooltip) {
       this._tooltip.show(this._projectionUtility.latLngToContainerPoint(d),
         i === 0 ? Config.tooltipText2 : Config.tooltipText1);
@@ -507,7 +507,7 @@ export default class MeasureTool {
   }
 
   _onOutCircle(d, target) {
-    select(target).attr('r', 5);
+    select(target).attr('r', 8);
     this._hideTooltip();
   }
 
@@ -536,7 +536,7 @@ export default class MeasureTool {
 
     circleDrag.on('start', function(d, i) {
       event.sourceEvent.stopPropagation();
-      select(this).raise().attr('r', 6);
+      select(this).raise().attr('r', 9);
       self._disableMapScroll();
     });
 
