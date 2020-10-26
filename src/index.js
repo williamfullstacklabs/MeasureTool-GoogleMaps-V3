@@ -310,7 +310,6 @@ export default class MeasureTool {
   }
 
   _checkClick(mouseEvent){
-    console.log("_checkClick");
     // Use circle radius 'r' as a flag to determine if it is a delete or add event.
     if(!this._clicked && !this._dragged && this._nodeCircles.selectAll('circle[r="6"]').size() == 0 &&
        !this._hoverCircle.select("circle").attr('cx')) {
@@ -319,7 +318,7 @@ export default class MeasureTool {
         this._geometry.addNode(node);
         this._overlay.draw();
     }
-    
+
     this._dragged = false;
     this._clicked = false;
   }
@@ -359,7 +358,6 @@ export default class MeasureTool {
   }
 
   _openContextMenu(d, i, target) {
-    console.log("_openContextMenu");
     this._singleContextMenu.hide();
     let self = this;
     this._clicked = true;
@@ -537,14 +535,12 @@ export default class MeasureTool {
       });
 
     circleDrag.on('start', function(d, i) {
-      console.log('start', i);
       event.sourceEvent.stopPropagation();
       select(this).raise().attr('r', 6);
       self._disableMapScroll();
     });
 
     circleDrag.on('end', function (d, i) {
-      console.log('end', i);
       self._enableMapScroll();
       if (!isDragged) {
         if (i > 0) {
