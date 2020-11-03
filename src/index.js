@@ -715,12 +715,16 @@ export default class MeasureTool {
   }
 
   _disableMapScroll() {
-    this._zoomControl = !!document.querySelector("button[aria-label='Zoom in']");
-    this._map.setOptions({ scrollwheel: false, gestureHandling: "none", zoomControl: false });
+    //this._zoomControl = !!document.querySelector("button[aria-label='Zoom in']");
+    //this._map.setOptions({ scrollwheel: false, gestureHandling: "none", zoomControl: false });
+    //console.log("options: ", this._map.getOptions());
+    this._map.setOptions({ scrollwheel: false, gestureHandling: "none" });
   }
 
   _enableMapScroll() {
-    this._map.setOptions({ scrollwheel: true, gestureHandling: "auto", zoomControl: this._zoomControl });
+    //this._map.setOptions({ scrollwheel: true, gestureHandling: "auto", zoomControl: this._zoomControl });
+    this._map.setOptions({ scrollwheel: true, gestureHandling: "auto" });
+
   }
 
   _transformNodeTextY(d, i) {
