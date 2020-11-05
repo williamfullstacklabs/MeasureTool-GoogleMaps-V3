@@ -321,6 +321,10 @@ export default class MeasureTool {
 
     this._dragged = false;
     this._clicked = false;
+    
+    if(/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) === true){
+      this._singleContextMenu.hide();
+    }
   }
 
   _updateCircles() {
@@ -332,8 +336,8 @@ export default class MeasureTool {
         .attr('r', 8)
         .attr('cx', d => this._projectionUtility.latLngToSvgPoint(d)[0])
         .attr('cy', d => this._projectionUtility.latLngToSvgPoint(d)[1])
-        .on('mouseover', function(d, i){ self._onOverCircle(d, i, this);})
-        .on('mouseout', function(d){ self._onOutCircle(d, this);})
+        //.on('mouseover', function(d, i){ self._onOverCircle(d, i, this);})
+        //.on('mouseout', function(d){ self._onOutCircle(d, this);})
         .on('touchstart', function(d, i){ self._onOverCircle(d, i, this);})
         .on('touchleave', function(d){ self._onOutCircle(d, this);})
         .on('mousedown', () => this._hideTooltip())
@@ -347,8 +351,8 @@ export default class MeasureTool {
         .attr('r', 8)
         .attr('cx', d => this._projectionUtility.latLngToSvgPoint(d)[0])
         .attr('cy', d => this._projectionUtility.latLngToSvgPoint(d)[1])
-        .on('mouseover', function(d, i){ self._onOverCircle(d, i, this);})
-        .on('mouseout', function(d){ self._onOutCircle(d, this);})
+        //.on('mouseover', function(d, i){ self._onOverCircle(d, i, this);})
+        //.on('mouseout', function(d){ self._onOutCircle(d, this);})
         .on('touchstart', function(d, i){ self._onOverCircle(d, i, this);})
         .on('touchleave', function(d){ self._onOutCircle(d, this);})
         .on('mousedown', () => this._hideTooltip())
@@ -546,11 +550,12 @@ export default class MeasureTool {
         if (i > 0) {
           self._openContextMenu(d, i, this);
         } else {
-          if(/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) === false){
+          if(/Android|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) === false){
             self._geometry.addNode(d);
             self._dragged = true;
           }
         }
+        self._openCM = true;
       } else {
         self._geometry.updateNode(
           i,
@@ -774,6 +779,7 @@ export default class MeasureTool {
     }
     this._area = area;
     if (area > 0) {
+      this._openCM = false;
       this._nodeText.select(':last-child')
         .text(`Total distance: ${this.lengthText}; Total area: ${this.areaText}.`);
     }
