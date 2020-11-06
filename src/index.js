@@ -409,10 +409,12 @@ export default class MeasureTool {
         .attr('x2', d => this._projectionUtility.latLngToSvgPoint(d[1])[0])
         .attr('y2', d => this._projectionUtility.latLngToSvgPoint(d[1])[1])
       .on('mousemove', d => {
-        let point = Helper.findTouchPoint(
-          [this._projectionUtility.latLngToSvgPoint(d[0]), this._projectionUtility.latLngToSvgPoint(d[1])],
-          [event.offsetX,  event.offsetY]);
-        this._updateHoverCirclePosition(point[0], point[1]);
+        if(/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) === false) {
+          let point = Helper.findTouchPoint(
+            [this._projectionUtility.latLngToSvgPoint(d[0]), this._projectionUtility.latLngToSvgPoint(d[1])],
+            [event.offsetX,  event.offsetY]);
+          this._updateHoverCirclePosition(point[0], point[1]);
+        }
       })
       .on('mouseout', d => this._hideHoverCircle())
       .on('mousedown', () => this._hideTooltip())
@@ -427,10 +429,12 @@ export default class MeasureTool {
         .attr('x2', d => this._projectionUtility.latLngToSvgPoint(d[1])[0])
         .attr('y2', d => this._projectionUtility.latLngToSvgPoint(d[1])[1])
         .on('mousemove', d => {
-          let point = Helper.findTouchPoint(
-            [this._projectionUtility.latLngToSvgPoint(d[0]), this._projectionUtility.latLngToSvgPoint(d[1])],
-            [event.offsetX,  event.offsetY]);
-          this._updateHoverCirclePosition(point[0], point[1]);
+          if(/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) === false) {
+            let point = Helper.findTouchPoint(
+              [this._projectionUtility.latLngToSvgPoint(d[0]), this._projectionUtility.latLngToSvgPoint(d[1])],
+              [event.offsetX,  event.offsetY]);
+            this._updateHoverCirclePosition(point[0], point[1]);
+          }
         })
         .on('mouseout', d => this._hideHoverCircle())
         .on('mousedown', () => this._hideTooltip())
@@ -571,59 +575,62 @@ export default class MeasureTool {
   }
 
   _onDragLine() {
-    let isDragged = false;
-    let lineDrag = drag()
-      .on('drag', (d, i) => {
-        this._dragging = true;
-        if (!isDragged) {
-          isDragged = true;
-          this._geometry.insertNode(
-            i + 1,
-            this._projectionUtility.svgPointToLatLng([event.x, event.y]));
-          this._updateLine();
+      let isDragged = false;
+      let lineDrag = drag();
+
+      if(/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) === false) {
+        lineDrag.on('drag', (d, i) => {
+          this._dragging = true;
+          if (!isDragged) {
+            isDragged = true;
+            this._geometry.insertNode(
+              i + 1,
+              this._projectionUtility.svgPointToLatLng([event.x, event.y]));
+            this._updateLine();
+            if (this._options.showSegmentLength) {
+              this._updateSegmentText();
+            }
+            if (this._options.showAccumulativeLength) {
+              this._updateNodeText();
+            }
+          }
+          this._updateHoverCirclePosition(event.x, event.y);
+          this._updateLinePosition(this._linesBase, i + 1);
+          this._updateLinePosition(this._linesAux, i + 1);
           if (this._options.showSegmentLength) {
-            this._updateSegmentText();
+            this._updateSegmentTextPosition(i + 1);
           }
           if (this._options.showAccumulativeLength) {
-            this._updateNodeText();
+            this._updateNodeTextPosition(i + 1);
           }
-        }
-        this._updateHoverCirclePosition(event.x, event.y);
-        this._updateLinePosition(this._linesBase, i + 1);
-        this._updateLinePosition(this._linesAux, i + 1);
-        if (this._options.showSegmentLength) {
-          this._updateSegmentTextPosition(i + 1);
-        }
-        if (this._options.showAccumulativeLength) {
-          this._updateNodeTextPosition(i + 1);
-        }
-        this._updateArea(i + 1, this._projectionUtility.svgPointToLatLng([event.x, event.y]));
+          this._updateArea(i + 1, this._projectionUtility.svgPointToLatLng([event.x, event.y]));
+        });
+
+      lineDrag.on('start', () => {
+        event.sourceEvent.stopPropagation();
+        this._hoverCircle.select("circle")
+          .attr('class', "cover-circle");
+        this._disableMapScroll();
       });
 
-    lineDrag.on('start', () => {
-      event.sourceEvent.stopPropagation();
-      this._hoverCircle.select("circle")
-        .attr('class', "cover-circle");
-      this._disableMapScroll();
-    });
-
-    lineDrag.on('end', (d, i) => {
-      this._enableMapScroll();
-      if (isDragged) {
-        this._geometry.updateNode(
-          i + 1,
-          this._projectionUtility.svgPointToLatLng([event.x, event.y]));
-        this._hideHoverCircle();
-        this._overlay.draw();
-        isDragged = false;
-        this._showTooltipOnEvent(Config.tooltipText1);
-      }
-      this._updateArea(i + 1, this._projectionUtility.svgPointToLatLng([event.x, event.y]));
-      this._hoverCircle.select("circle")
-        .attr('class', "grey-circle");
-      this._dragging = false;
-    });
-
+      lineDrag.on('end', (d, i) => {
+        this._enableMapScroll();
+        if (isDragged) {
+          this._geometry.updateNode(
+            i + 1,
+            this._projectionUtility.svgPointToLatLng([event.x, event.y]));
+          this._hideHoverCircle();
+          this._overlay.draw();
+          isDragged = false;
+          this._showTooltipOnEvent(Config.tooltipText1);
+        }
+        this._updateArea(i + 1, this._projectionUtility.svgPointToLatLng([event.x, event.y]));
+        this._hoverCircle.select("circle")
+          .attr('class', "grey-circle");
+        this._dragging = false;
+      });
+    }
+    
     return lineDrag;
   }
 
