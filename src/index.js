@@ -56,7 +56,7 @@ export default class MeasureTool {
   _init() {
     this._containerDiv = this._map.getDiv().querySelector("div:first-child");
 
-    this._singleContextMenu = new SingleContextMenu(this._containerDiv);
+    this._singleContextMenu = new SingleContextMenu(new google.maps.OverlayView(), this);
 
     if (this._options.contextMenu) {
       this._contextMenu = new ContextMenu(this._containerDiv, { width: 160 });
@@ -313,17 +313,24 @@ export default class MeasureTool {
     // Use circle radius 'r' as a flag to determine if it is a delete or add event.
     if(!this._clicked && !this._dragged && this._nodeCircles.selectAll('circle[r="9"]').size() == 0 &&
        !this._hoverCircle.select("circle").attr('cx')) {
-        this._singleContextMenu.hide();
-        const node = [mouseEvent.latLng.lng(), mouseEvent.latLng.lat()];
-        this._geometry.addNode(node);
-        this._overlay.draw();
+        if (!this._singleContextMenu || !this._singleContextMenu.isDisplayed()) {
+          const node = [mouseEvent.latLng.lng(), mouseEvent.latLng.lat()];
+          this._geometry.addNode(node);
+          this._overlay.draw();
+        }
+        
+        if (this._singleContextMenu) this._singleContextMenu.hide();
     }
 
     this._dragged = false;
     this._clicked = false;
-    
+
     if(/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) === true){
-      this._singleContextMenu.hide();
+      if(this._closed){
+        this._singleContextMenu.hide();
+        this.ft = false;
+        this._closed = false;
+      }
     }
   }
 
@@ -362,17 +369,21 @@ export default class MeasureTool {
   }
 
   _openContextMenu(d, i, target) {
-    this._singleContextMenu.hide();
+    if (this._singleContextMenu) this._singleContextMenu.hide();
     let self = this;
     this._clicked = true;
 
-    let point = this._projection.fromLatLngToContainerPixel(new google.maps.LatLng(d[1], d[0]));
-    this._singleContextMenu.show(point, () => {
-      self._geometry.removeNode(i);
-      select(target).classed('removed-circle', true);
-      self._overlay.draw();
-      self._clicked = false;
-    }, this);
+    this._singleContextMenu.show(
+      new google.maps.LatLng(d[1], d[0]),
+      () => {
+        self._geometry.removeNode(i);
+        select(target).classed('removed-circle', true);
+        self._overlay.draw();
+        if(/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) === false){
+          this._clicked = true;
+        }
+      }
+    );
   }
 
   _updateLine() {
@@ -559,7 +570,6 @@ export default class MeasureTool {
             self._dragged = true;
           }
         }
-        self._openCM = true;
       } else {
         self._geometry.updateNode(
           i,
@@ -786,9 +796,13 @@ export default class MeasureTool {
     }
     this._area = area;
     if (area > 0) {
-      this._openCM = false;
+      if (this.ft) {
+        this._closed = true;
+      }
       this._nodeText.select(':last-child')
         .text(`Total distance: ${this.lengthText}; Total area: ${this.areaText}.`);
+    } else {
+      this.ft = true;
     }
   }
 

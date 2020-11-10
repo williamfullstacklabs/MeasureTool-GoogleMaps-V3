@@ -2,22 +2,57 @@ import {Config} from './config';
 import css from 'single-context-menu.scss';
 
 export default class SingleContextMenu {
-    constructor(parentContainer) {
-        this._parentContainer = parentContainer;
+    constructor(overlay, context) {
+        this.context = context;
+
+        this._overlay = overlay;
+        this._overlay.onAdd = this.onAdd.bind(this);
+        this._overlay.draw = this.draw.bind(this);
+        this._overlay.onRemove = this.onRemove.bind(this);
+
+        this.displayed = false;
     }
 
-    create() {
-        this._singleContextMenu = document.createElement("div");
-        this._singleContextMenu.classList.add(`${Config.prefix}-single-context-menu`);
-        this._singleContextMenu.id = `${Config.prefix}-single-context-menu`;
-        this._singleContextMenu.stylesheet = css;
-        this._singleContextMenu.oncontextmenu = event => event.preventDefault();
-
-        this._parentContainer.appendChild(this._singleContextMenu);
+    onAdd() {
+        this._overlay.getPanes().floatPane.appendChild(this.containerDiv);
+    }
+    
+    onRemove() {
+        if (this.containerDiv.parentElement) {
+            this.containerDiv.parentElement.removeChild(this.containerDiv);
+        }
     }
 
-    show(point, cb, context) {
-        this.create();
+    draw() {
+        const divPosition = this._overlay.getProjection().fromLatLngToDivPixel(
+          this.position
+        );
+        // Hide the popup when it is far out of view.
+        const display =
+          Math.abs(divPosition.x) < 4000 && Math.abs(divPosition.y) < 4000
+            ? "block"
+            : "none";
+  
+        if (display === "block") {
+          this.containerDiv.style.left = divPosition.x + "px";
+          this.containerDiv.style.top = divPosition.y + "px";
+        }
+  
+        if (this.containerDiv.style.display !== display) {
+          this.containerDiv.style.display = display;
+        }
+    }
+
+    show(position, cb) {
+        this.position = position;
+        this.cb = cb; 
+
+        this.containerDiv = document.createElement("div");
+        this.containerDiv.classList.add(`${Config.prefix}-single-context-menu`);
+        this.containerDiv.id = `${Config.prefix}-single-context-menu`;
+        this.containerDiv.stylesheet = css;
+        this.containerDiv.oncontextmenu = event => event.preventDefault();
+        
         let item = document.createElement("div");
         item.className = `${Config.prefix}-single-context-menu-item`;
         item.innerHTML = `
@@ -26,35 +61,35 @@ export default class SingleContextMenu {
         `
         item.onclick = (e) => {
             e.preventDefault();
-            cb.apply(context);
+            cb.apply(this.context);
             this.hide();
         };
 
-        this._singleContextMenu.style.cssText = `
+        this.containerDiv.style.cssText = `
             display: block;
-            visibility: hidden;
-            position: absolute;
         `;
-
-        this._singleContextMenu.appendChild(item);  
         
-        let isXOverflow = this._parentContainer.getBoundingClientRect().width <= point.x + this._singleContextMenu.getBoundingClientRect().width;
-        let isYOverflow = this._parentContainer.getBoundingClientRect().height <= point.y + this._singleContextMenu.getBoundingClientRect().height;
+        this.containerDiv.appendChild(item);
 
-        this._singleContextMenu.style.cssText += `
-            ${isXOverflow ? "right: 0px;" : "left: " + point.x + "px;"}
-            ${isYOverflow ? "bottom: 14px;" : "top: " + point.y + "px;"}
-            visibility: visible;
-        `;
+        this._overlay.setMap(this.context._map);
+        this.displayed = true;
     }
 
     hide() {
-        if (this._singleContextMenu) {
-            this._singleContextMenu.remove();
+        /*
+        if (this.containerDiv) {
+            this.containerDiv.remove();
             const cm = document.getElementById("measure-tool-single-context-menu");
             if (cm) {
                 cm.remove();
             }
         }
+        */
+        this.displayed = false;
+        if (this._overlay) this._overlay.setMap(null);
+    }
+
+    isDisplayed() {
+        return this.displayed;
     }
 }
