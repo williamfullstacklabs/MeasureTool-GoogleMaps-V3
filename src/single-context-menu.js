@@ -22,7 +22,7 @@ export default class SingleContextMenu {
         item.className = `${Config.prefix}-single-context-menu-item`;
         item.innerHTML = `
             <span class="${Config.prefix}-context-menu-item-delete-icon"></span>
-            <span style="font-weight: 400">Remove</span>
+            <span class="${Config.prefix}-context-menu-item-text">Remove</span>
         `
         item.onclick = (e) => {
             e.preventDefault();
