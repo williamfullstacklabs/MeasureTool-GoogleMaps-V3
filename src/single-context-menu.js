@@ -73,7 +73,7 @@ export default class SingleContextMenu {
 
         this._overlay.setMap(this._context._map);
         this.displayed = true;
-        //this._context._map.panTo(this.position);
+        if (this._context) this._context._map.panTo(this.position);
     }
 
     hide() {
