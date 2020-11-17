@@ -3,7 +3,7 @@ import css from 'single-context-menu.scss';
 
 export default class SingleContextMenu {
     constructor(overlay, context) {
-        this.context = context;
+        this._context = context;
 
         this._overlay = overlay;
         this._overlay.onAdd = this.onAdd.bind(this);
@@ -61,7 +61,7 @@ export default class SingleContextMenu {
         `
         item.onclick = (e) => {
             e.preventDefault();
-            cb.apply(this.context);
+            cb.apply(this._context);
             this.hide();
         };
 
@@ -71,8 +71,9 @@ export default class SingleContextMenu {
         
         this.containerDiv.appendChild(item);
 
-        this._overlay.setMap(this.context._map);
+        this._overlay.setMap(this._context._map);
         this.displayed = true;
+        this._context._map.panTo(this.position);
     }
 
     hide() {
